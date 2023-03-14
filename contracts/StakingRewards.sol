@@ -210,7 +210,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    // 质押池接收奖励代币后的检验操作（被StakingRewardsFactory转入奖励代币后调用）
+    // 激活质押挖矿池，质押池接收奖励代币后的检验操作（被StakingRewardsFactory转入奖励代币后调用）
     function notifyRewardAmount(uint256 reward) external onlyRewardsDistribution updateReward(address(0)) {
         if (block.timestamp >= periodFinish) {
             rewardRate = reward.div(rewardsDuration);
@@ -230,7 +230,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
 
         // 更新lastUpdateTime
         lastUpdateTime = block.timestamp;
-        // 设置挖矿截止时间
+        // 设置挖矿截止时间，即激活质押池
         periodFinish = block.timestamp.add(rewardsDuration);
         emit RewardAdded(reward);
     }
