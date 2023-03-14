@@ -9,6 +9,7 @@ import "openzeppelin-solidity-2.3.0/contracts/utils/ReentrancyGuard.sol";
 // Inheritance
 import "./interfaces/IStakingRewards.sol";
 import "./RewardsDistributionRecipient.sol";
+import "./test/TestERC20.sol";
 
 /*
 * StakingRewards用于特定质押代币进行质押和奖励发放
@@ -66,11 +67,11 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
     IERC20 public rewardsToken;
     // 质押代币
     IERC20 public stakingToken;
-    // 表示可被挖矿的结束时间
+    // 表示可被挖矿时期的结束时间
     uint256 public periodFinish = 0;
     // 奖励比率（每秒能够产生的奖励总数），即公式中的 a
     uint256 public rewardRate = 0;
-    // 该质押池可被挖矿时长
+    // 该质押池每个时期可被挖矿时长
     uint256 public rewardsDuration = 60 days;
     // rewardPerTokenStored发生变化的上一次时间，即公式中的 m
     uint256 public lastUpdateTime;
@@ -111,7 +112,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         return _balances[account];
     }
 
-    // 进行奖励计算时的时间的右区间
+    // 进行奖励计算时的时间的右区间 n
     function lastTimeRewardApplicable() public view returns (uint256) {
         return Math.min(block.timestamp, periodFinish);
     }
@@ -164,14 +165,14 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         emit Staked(msg.sender, amount);
     }
 
-    // 质押，增加质押量
+    // 质押，增加质押量 // 需要先approve
     function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
         require(amount > 0, "Cannot stake 0");
         // _totalSupply增加
         _totalSupply = _totalSupply.add(amount);
         // 更新用户质押量映射
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        // 转移用户质押代币到stakingRewards合约(当前合约)
+        // 转移用户质押代币到stakingRewards合约(当前合约) 需要先approve
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Staked(msg.sender, amount);
     }
@@ -249,7 +250,7 @@ contract StakingRewards is IStakingRewards, RewardsDistributionRecipient, Reentr
         if (account != address(0)) {
             // 奖励总和 = b * (Tn - Tm) + Fm
             rewards[account] = earned(account);
-            // 更新Tm
+            // 更新Tm --> Tn
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
         _;

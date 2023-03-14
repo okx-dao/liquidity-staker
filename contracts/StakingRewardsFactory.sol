@@ -16,7 +16,7 @@ contract StakingRewardsFactory is Ownable {
     // immutables
     // 奖励代币
     address public rewardsToken;
-    // 开始生成质押奖励的起始时间
+    // 激活质押奖励池合约的最早时间
     uint public stakingRewardsGenesis;
 
     // the staking tokens for which the rewards contract has been deployed
@@ -43,7 +43,7 @@ contract StakingRewardsFactory is Ownable {
 
         // 质押奖励代币
         rewardsToken = _rewardsToken;
-        // 质押奖励生成开始时间
+        // 激活质押奖励池合约的最早时间
         stakingRewardsGenesis = _stakingRewardsGenesis;
     }
 
@@ -69,7 +69,7 @@ contract StakingRewardsFactory is Ownable {
     ///// permissionless functions
 
     // call notifyRewardAmount for all staking tokens.
-    // 遍历stakingTokens数组，给每个质押代币的stakingRewards合约中转入对应数量(rewardAmount)的奖励代币
+    // 遍历stakingTokens数组，给每个质押代币的stakingRewards合约中转入对应数量(rewardAmount)的奖励代币，即激活质押奖励池
     function notifyRewardAmounts() public {
         // 确保stakingTokens数组不为空
         require(stakingTokens.length > 0, 'StakingRewardsFactory::notifyRewardAmounts: called before any deploys');
@@ -83,7 +83,7 @@ contract StakingRewardsFactory is Ownable {
     // this is a fallback in case the notifyRewardAmounts costs too much gas to call for all contracts
     // 单独给某一个质押代币进行转入对应数量的奖励代币
     function notifyRewardAmount(address stakingToken) public {
-        // 需要确保当前时间在质押奖励生成时间之后
+        // 需要确保当前时间在激活质押奖励池合约的最早时间之后
         require(block.timestamp >= stakingRewardsGenesis, 'StakingRewardsFactory::notifyRewardAmount: not ready');
 
         // 获取质押代币对应的StakingRewardsInfo的一个storage引用，方便修改后被持久化到链上合约状态中
@@ -100,7 +100,7 @@ contract StakingRewardsFactory is Ownable {
                 IERC20(rewardsToken).transfer(info.stakingRewards, rewardAmount),
                 'StakingRewardsFactory::notifyRewardAmount: transfer failed'
             );
-            // 调用stakingRewards合约，进行更新
+            // 调用stakingRewards合约，进行激活
             StakingRewards(info.stakingRewards).notifyRewardAmount(rewardAmount);
         }
     }
